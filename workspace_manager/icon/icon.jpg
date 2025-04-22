@@ -1,0 +1,67 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <circle cx="256" cy="256" r="240" fill="#f0f4f9" stroke="#22577a" stroke-width="12"/>
+  
+  <!-- ROS节点网络结构 -->
+  <g transform="translate(256, 256)">
+    <!-- 中心节点 - 代表工作空间核心 -->
+    <circle cx="0" cy="0" r="50" fill="#22577a" stroke="#38a3a5" stroke-width="6"/>
+    
+    <!-- 连接线 -->
+    <path d="M 0,-10 L 0,-120" stroke="#38a3a5" stroke-width="6" stroke-linecap="round" stroke-dasharray="0,0"/>
+    <path d="M -10,0 L -110,-60" stroke="#38a3a5" stroke-width="6" stroke-linecap="round" stroke-dasharray="0,0"/>
+    <path d="M -10,10 L -110,80" stroke="#38a3a5" stroke-width="6" stroke-linecap="round" stroke-dasharray="0,0"/>
+    <path d="M 10,10 L 110,80" stroke="#38a3a5" stroke-width="6" stroke-linecap="round" stroke-dasharray="0,0"/>
+    <path d="M 10,-5 L 110,-60" stroke="#38a3a5" stroke-width="6" stroke-linecap="round" stroke-dasharray="0,0"/>
+    
+    <!-- 外部节点 - 代表工作空间中的各个包 -->
+    <circle cx="0" cy="-120" r="30" fill="#57cc99" stroke="#38a3a5" stroke-width="4"/>
+    <circle cx="-110" cy="-60" r="30" fill="#57cc99" stroke="#38a3a5" stroke-width="4"/>
+    <circle cx="-110" cy="80" r="30" fill="#57cc99" stroke="#38a3a5" stroke-width="4"/>
+    <circle cx="110" cy="80" r="30" fill="#57cc99" stroke="#38a3a5" stroke-width="4"/>
+    <circle cx="110" cy="-60" r="30" fill="#57cc99" stroke="#38a3a5" stroke-width="4"/>
+    
+    <!-- 文件夹/工作空间图标元素 -->
+    <g transform="translate(0, 0) scale(0.6)">
+      <path d="M -30,-20 L -10,-20 L 0,-10 L 30,-10 L 30,25 L -30,25 Z" fill="#c7f9cc" stroke="#22577a" stroke-width="4"/>
+      <path d="M -20,0 L 0,0 M -20,10 L 20,10" stroke="#22577a" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    
+    <!-- 节点内部图案 - 简化的代码/配置文件图标 -->
+    <g transform="translate(0, -120) scale(0.4)">
+      <path d="M -20,-20 L 20,-20 L 20,20 L -20,20 Z" fill="#c7f9cc" stroke="#22577a" stroke-width="4"/>
+      <path d="M -10,-10 L 10,-10 M -10,0 L 0,0 M -10,10 L 5,10" stroke="#22577a" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    
+    <g transform="translate(-110, -60) scale(0.4)">
+      <path d="M -20,-20 L 20,-20 L 20,20 L -20,20 Z" fill="#c7f9cc" stroke="#22577a" stroke-width="4"/>
+      <path d="M -10,-10 L 10,-10 M -10,0 L 0,0 M -10,10 L 5,10" stroke="#22577a" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    
+    <g transform="translate(-110, 80) scale(0.4)">
+      <path d="M -20,-20 L 20,-20 L 20,20 L -20,20 Z" fill="#c7f9cc" stroke="#22577a" stroke-width="4"/>
+      <path d="M -10,-10 L 10,-10 M -10,0 L 0,0 M -10,10 L 5,10" stroke="#22577a" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    
+    <g transform="translate(110, 80) scale(0.4)">
+      <path d="M -20,-20 L 20,-20 L 20,20 L -20,20 Z" fill="#c7f9cc" stroke="#22577a" stroke-width="4"/>
+      <path d="M -10,-10 L 10,-10 M -10,0 L 0,0 M -10,10 L 5,10" stroke="#22577a" stroke-width="4" stroke-linecap="round"/>
+    </g>
+    
+    <g transform="translate(110, -60) scale(0.4)">
+      <path d="M -20,-20 L 20,-20 L 20,20 L -20,20 Z" fill="#c7f9cc" stroke="#22577a" stroke-width="4"/>
+      <path d="M -10,-10 L 10,-10 M -10,0 L 0,0 M -10,10 L 5,10" stroke="#22577a" stroke-width="4" stroke-linecap="round"/>
+    </g>
+  </g>
+  
+  <!-- 装饰性光晕效果 -->
+  <circle cx="256" cy="256" r="200" fill="url(#gradient)" opacity="0.15"/>
+  
+  <!-- 渐变定义 -->
+  <defs>
+    <radialGradient id="gradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+      <stop offset="0%" stop-color="#38a3a5" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#38a3a5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+</svg>
