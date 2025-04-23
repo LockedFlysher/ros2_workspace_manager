@@ -21,6 +21,9 @@ git clone https://gitee.com/LockedFlysher/ros2-workspace-manager.git
 
 2. 安装依赖：
 ```bash
+sudo apt update
+sudo apt install libgtk-3-dev
+pip3 install wxPython
 sudo apt install python3-pyqt5  # PyQt5
 pip3 install pyyaml            # PyYAML
 ```
