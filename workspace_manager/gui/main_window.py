@@ -116,6 +116,8 @@ class WorkspaceManagerGUI(QMainWindow):
         # Toolbar
         self.toolbar = QToolBar('工具栏')
         self.toolbar.setIconSize(QSize(18, 18))
+        # 使用纯文字工具按钮，避免主题图标依赖
+        self.toolbar.setToolButtonStyle(Qt.ToolButtonTextOnly)
         self.addToolBar(self.toolbar)
         self._create_toolbar_actions()
 
@@ -289,38 +291,37 @@ class WorkspaceManagerGUI(QMainWindow):
             print(f"无法设置X11窗口属性: {e}")
 
     def _create_toolbar_actions(self):
-        """创建工具栏动作并绑定。"""
-        style = self.style()
+        """创建工具栏动作并绑定（文字按钮）。"""
 
-        act_select_ws = QAction(style.standardIcon(QStyle.SP_DirOpenIcon), '选择工作空间', self)
+        act_select_ws = QAction('选择工作空间', self)
         act_select_ws.triggered.connect(self.select_workspace)
         self.toolbar.addAction(act_select_ws)
 
-        act_refresh = QAction(style.standardIcon(QStyle.SP_BrowserReload), '刷新', self)
+        act_refresh = QAction('刷新', self)
         act_refresh.triggered.connect(self.refresh_packages)
         self.toolbar.addAction(act_refresh)
 
         self.toolbar.addSeparator()
 
-        act_select_all = QAction(style.standardIcon(QStyle.SP_DialogYesButton), '全选', self)
+        act_select_all = QAction('全选', self)
         act_select_all.triggered.connect(self.select_all_packages)
         self.toolbar.addAction(act_select_all)
 
-        act_deselect_all = QAction(style.standardIcon(QStyle.SP_DialogNoButton), '全不选', self)
+        act_deselect_all = QAction('全不选', self)
         act_deselect_all.triggered.connect(self.deselect_all_packages)
         self.toolbar.addAction(act_deselect_all)
 
         self.toolbar.addSeparator()
 
         # 依赖关系图
-        act_graph = QAction(style.standardIcon(QStyle.SP_FileDialogDetailedView), '依赖关系图', self)
+        act_graph = QAction('依赖关系图', self)
         act_graph.triggered.connect(self.show_dependency_graph)
         self.toolbar.addAction(act_graph)
 
         self.toolbar.addSeparator()
 
         # 仅保留“停止编译”在工具栏；构建/清理移动到底部
-        self.act_stop = QAction(style.standardIcon(QStyle.SP_BrowserStop), '停止编译', self)
+        self.act_stop = QAction('停止编译', self)
         self.act_stop.triggered.connect(self.stop_build)
         self.act_stop.setEnabled(False)
         self.toolbar.addAction(self.act_stop)
