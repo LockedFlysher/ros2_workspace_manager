@@ -1,4 +1,5 @@
 always_on_top: false
+build_type: auto
 last_selected_packages:
 - mit_msgs
 - mujoco_lidar

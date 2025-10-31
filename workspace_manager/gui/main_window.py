@@ -6,9 +6,11 @@ from PyQt5.QtWidgets import (
     QFileDialog, QGroupBox,
     QSpinBox, QToolBar, QAction, QLineEdit, QTextEdit,
     QStatusBar, QComboBox, QSplitter, QStyle, QProgressBar,
-    QTableWidget, QTableWidgetItem, QHeaderView,
+    QTableWidget, QTableWidgetItem, QHeaderView, QDialog,
+    QGraphicsView, QGraphicsScene,
 )
-from PyQt5.QtCore import Qt, QProcess, QSize
+from PyQt5.QtCore import Qt, QProcess, QSize, QPointF, QRectF
+from PyQt5.QtGui import QPen, QBrush, QColor, QFont, QPolygonF
 import os
 import yaml
 import xml.etree.ElementTree as ET
@@ -76,6 +78,7 @@ class WorkspaceManagerGUI(QMainWindow):
                 'always_on_top': False,  # 添加新的配置项
                 'parallel_workers': os.cpu_count() or 8,
                 'theme': 'dark',
+                'build_type': 'auto',
             }
 
     def save_config(self):
@@ -96,6 +99,11 @@ class WorkspaceManagerGUI(QMainWindow):
             self.config['theme'] = self.theme_combo.currentData() or self.theme_name
         except Exception:
             self.config['theme'] = self.theme_name
+        # 保存构建类型（使用 data 存储）
+        try:
+            self.config['build_type'] = self.build_type_combo.currentData()
+        except Exception:
+            self.config['build_type'] = 'auto'
 
         os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
         with open(self.config_file, 'w') as f:
@@ -170,6 +178,21 @@ class WorkspaceManagerGUI(QMainWindow):
         self.symlink_check.setChecked(self.config.get('symlink_install', True))
         options_layout.addWidget(self.symlink_check)
 
+        # 构建类型（Release/Debug/让CMakeLists决定）紧邻 symlink 选项
+        options_layout.addWidget(QLabel('构建类型'))
+        self.build_type_combo = QComboBox()
+        self.build_type_combo.addItem('让CMakeLists决定', 'auto')
+        self.build_type_combo.addItem('Release', 'Release')
+        self.build_type_combo.addItem('Debug', 'Debug')
+        bt = self.config.get('build_type', 'auto')
+        if bt not in ['auto', 'Release', 'Debug']:
+            bt = 'auto'
+        idx_bt = self.build_type_combo.findData(bt)
+        if idx_bt >= 0:
+            self.build_type_combo.setCurrentIndex(idx_bt)
+        self.build_type_combo.currentIndexChanged.connect(self.save_config)
+        options_layout.addWidget(self.build_type_combo)
+
         self.always_on_top_btn = QPushButton('置顶窗口')
         self.always_on_top_btn.setCheckable(True)
         self.always_on_top_btn.setChecked(self.config.get('always_on_top', False))
@@ -194,6 +217,11 @@ class WorkspaceManagerGUI(QMainWindow):
             self.theme_combo.setCurrentIndex(idx)
         self.theme_combo.currentIndexChanged.connect(self._on_theme_changed)
         options_layout.addWidget(self.theme_combo)
+
+        # ROS_DISTRO 显示（只读）
+        ros_distro = os.environ.get('ROS_DISTRO') or '未知'
+        self.ros_distro_label = QLabel(f'ROS_DISTRO: {ros_distro}')
+        options_layout.addWidget(self.ros_distro_label)
 
         # push primary actions to the far right
         options_layout.addStretch(1)
@@ -284,20 +312,18 @@ class WorkspaceManagerGUI(QMainWindow):
 
         self.toolbar.addSeparator()
 
-        self.act_build = QAction(style.standardIcon(QStyle.SP_ArrowRight), '编译所选', self)
-        self.act_build.triggered.connect(self.build_package)
-        self.toolbar.addAction(self.act_build)
+        # 依赖关系图
+        act_graph = QAction(style.standardIcon(QStyle.SP_FileDialogDetailedView), '依赖关系图', self)
+        act_graph.triggered.connect(self.show_dependency_graph)
+        self.toolbar.addAction(act_graph)
 
+        self.toolbar.addSeparator()
+
+        # 仅保留“停止编译”在工具栏；构建/清理移动到底部
         self.act_stop = QAction(style.standardIcon(QStyle.SP_BrowserStop), '停止编译', self)
         self.act_stop.triggered.connect(self.stop_build)
         self.act_stop.setEnabled(False)
         self.toolbar.addAction(self.act_stop)
-
-        self.toolbar.addSeparator()
-
-        act_clean = QAction(style.standardIcon(QStyle.SP_DialogResetButton), '清理', self)
-        act_clean.triggered.connect(self.clean_workspace)
-        self.toolbar.addAction(act_clean)
 
     def _on_theme_changed(self):
         """主题切换处理。"""
@@ -430,6 +456,10 @@ class WorkspaceManagerGUI(QMainWindow):
             cmd.append('--symlink-install')
         workers = int(self.config.get('parallel_workers', os.cpu_count() or 8))
         cmd.extend(['--parallel-workers', str(workers)])
+        # 构建类型（CMAKE_BUILD_TYPE）
+        build_type = self.config.get('build_type', 'auto')
+        if build_type in ['Release', 'Debug']:
+            cmd.extend(['--cmake-args', f'-DCMAKE_BUILD_TYPE={build_type}'])
         cmd.extend(['--packages-select'])
         cmd.extend(selected_packages)
 
@@ -503,6 +533,8 @@ class WorkspaceManagerGUI(QMainWindow):
             self.build_primary_btn.setEnabled(not building)
         if hasattr(self, 'clean_secondary_btn'):
             self.clean_secondary_btn.setEnabled(not building)
+        if hasattr(self, 'build_type_combo'):
+            self.build_type_combo.setEnabled(not building)
         self.symlink_check.setEnabled(not building)
         self.workers_spin.setEnabled(not building)
         if hasattr(self, 'packages_table'):
@@ -586,6 +618,158 @@ class WorkspaceManagerGUI(QMainWindow):
                 name = name_item.text() if name_item else ''
                 visible = (text in name.lower()) if text else True
                 self.packages_table.setRowHidden(row, not visible)
+
+    def show_dependency_graph(self):
+        """打开依赖关系图对话框。优先显示选中包及其依赖，否则显示全部。"""
+        # 准备依赖信息
+        if not self.package_dependencies:
+            try:
+                self.refresh_packages()
+            except Exception:
+                pass
+
+        selected = [pkg for pkg, cb in self.package_checkboxes.items() if cb.isChecked()]
+        if selected:
+            # 求闭包：选中包及其所有依赖
+            nodes = set()
+            stack = list(selected)
+            while stack:
+                p = stack.pop()
+                if p in nodes:
+                    continue
+                nodes.add(p)
+                for d in self.package_dependencies.get(p, set()):
+                    if d not in nodes:
+                        stack.append(d)
+        else:
+            nodes = set(self.package_checkboxes.keys())
+
+        # 构建子图边
+        edges = []
+        for src in nodes:
+            for dep in self.package_dependencies.get(src, set()):
+                if dep in nodes:
+                    edges.append((src, dep))
+
+        # 创建并展示对话框
+        dlg = QDialog(self)
+        dlg.setWindowTitle('包依赖关系图')
+        dlg.resize(900, 600)
+
+        layout = QVBoxLayout(dlg)
+        view = QGraphicsView()
+        scene = self._build_dependency_scene(nodes, edges, set(selected))
+        view.setScene(scene)
+        view.setRenderHints(view.renderHints())
+        layout.addWidget(view)
+
+        # 自适应内容
+        try:
+            view.fitInView(scene.itemsBoundingRect(), Qt.KeepAspectRatio)
+        except Exception:
+            pass
+
+        dlg.setLayout(layout)
+        dlg.exec_()
+
+    def _build_dependency_scene(self, nodes, edges, selected_set):
+        """根据 nodes/edges 构建简单分层布局图。"""
+        scene = QGraphicsScene()
+
+        # 计算层（拓扑层次）
+        deps_map = {n: set() for n in nodes}
+        for s, d in edges:
+            deps_map[s].add(d)
+        indeg = {n: 0 for n in nodes}
+        for s in nodes:
+            for d in deps_map[s]:
+                indeg[d] += 1
+
+        levels = []
+        current = [n for n in nodes if indeg[n] == 0]
+        seen = set()
+        while current:
+            levels.append(current)
+            next_level = []
+            for u in current:
+                seen.add(u)
+                for v in deps_map[u]:
+                    indeg[v] -= 1
+                    if indeg[v] == 0:
+                        next_level.append(v)
+            current = next_level
+        # 若有剩余（环/未分配），放到最后一层
+        remain = [n for n in nodes if n not in seen]
+        if remain:
+            levels.append(remain)
+
+        # 布局与绘制
+        X_SPACING = 240
+        Y_SPACING = 80
+        RECT_W = 140
+        RECT_H = 36
+
+        pos = {}
+        for i, layer in enumerate(levels):
+            # 居中排列此层
+            for j, n in enumerate(sorted(layer)):
+                x = i * X_SPACING
+                y = j * Y_SPACING
+                pos[n] = QPointF(x, y)
+
+        # 先画节点
+        node_items = {}
+        for n, p in pos.items():
+            rect = QRectF(p.x(), p.y(), RECT_W, RECT_H)
+            color_bg = QColor(94, 129, 172) if n in selected_set else QColor(42, 47, 58)
+            color_border = QColor(59, 66, 82)
+            if self.theme_name == 'light':
+                color_bg = QColor(25, 118, 210) if n in selected_set else QColor(255, 255, 255)
+                color_border = QColor(208, 208, 208)
+
+            brush = QBrush(color_bg)
+            pen = QPen(color_border)
+            pen.setWidth(1)
+            scene.addRect(rect, pen, brush)
+
+            # 文本
+            text_color = QColor(255, 255, 255) if n in selected_set and self.theme_name == 'dark' else QColor(230, 230, 230) if self.theme_name == 'dark' else QColor(33, 33, 33)
+            text_item = scene.addText(n, QFont('Sans', 9))
+            text_item.setDefaultTextColor(text_color)
+            # 居中放置
+            tb = text_item.boundingRect()
+            text_item.setPos(rect.center().x() - tb.width()/2, rect.center().y() - tb.height()/2)
+            node_items[n] = rect
+
+        # 再画边
+        edge_pen = QPen(QColor(136, 192, 208) if self.theme_name == 'dark' else QColor(100, 100, 100))
+        for s, d in edges:
+            if s not in node_items or d not in node_items:
+                continue
+            rs = node_items[s]
+            rd = node_items[d]
+            start = QPointF(rs.right(), rs.center().y())
+            end = QPointF(rd.left(), rd.center().y())
+            scene.addLine(start.x(), start.y(), end.x(), end.y(), edge_pen)
+
+            # 箭头
+            try:
+                dx = end.x() - start.x()
+                dy = end.y() - start.y()
+                length = max((dx*dx + dy*dy) ** 0.5, 1.0)
+                ux, uy = dx/length, dy/length
+                arrow_size = 8
+                p1 = end
+                p2 = QPointF(end.x() - ux*arrow_size - uy*arrow_size/2, end.y() - uy*arrow_size + ux*arrow_size/2)
+                p3 = QPointF(end.x() - ux*arrow_size + uy*arrow_size/2, end.y() - uy*arrow_size - ux*arrow_size/2)
+                poly = QPolygonF([p1, p2, p3])
+                scene.addPolygon(poly, edge_pen, QBrush(edge_pen.color()))
+            except Exception:
+                pass
+
+        # 视图边界
+        scene.setSceneRect(scene.itemsBoundingRect().adjusted(-40, -40, 80, 80))
+        return scene
 
     def on_package_checkbox_changed(self, package_name, state):
         """处理包选择状态改变"""

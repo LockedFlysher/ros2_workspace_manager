@@ -18,6 +18,14 @@ class WorkspaceManagerNode(Node):
 def main(args=None):
     rclpy.init(args=args)
     app = QApplication(sys.argv)
+    # 尝试设置一个通用图标主题，避免缺失主题的提示
+    try:
+        # 优先 Adwaita，不存在则退回 hicolor
+        QIcon.setThemeName("Adwaita")
+        if not QIcon.hasThemeIcon("folder"):
+            QIcon.setThemeName("hicolor")
+    except Exception:
+        pass
     icon_path = os.path.join(get_package_share_directory("workspace_manager"), "icon", "icon.jpg")
     node = WorkspaceManagerNode()
 
