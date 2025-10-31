@@ -1,6 +1,7 @@
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QPushButton, QLabel, QMessageBox, QCheckBox,
-                             QFileDialog, QScrollArea, QGroupBox, QGridLayout)
+                             QFileDialog, QScrollArea, QGroupBox, QGridLayout,
+                             QSpinBox)
 from PyQt5.QtCore import Qt
 import os
 import subprocess
@@ -55,11 +56,13 @@ class WorkspaceManagerGUI(QMainWindow):
             with open(self.config_file, 'r') as f:
                 self.config = yaml.safe_load(f)
         except (FileNotFoundError, yaml.YAMLError):
+            # 默认配置
             self.config = {
                 'workspace_path': '',
                 'last_selected_packages': [],
                 'symlink_install': True,
-                'always_on_top': False  # 添加新的配置项
+                'always_on_top': False,  # 添加新的配置项
+                'parallel_workers': os.cpu_count() or 8,
             }
 
     def save_config(self):
@@ -70,6 +73,11 @@ class WorkspaceManagerGUI(QMainWindow):
         ]
         self.config['symlink_install'] = self.symlink_check.isChecked()
         self.config['always_on_top'] = self.always_on_top  # 保存置顶状态
+        # 保存并同步并行编译线程数
+        try:
+            self.config['parallel_workers'] = int(self.workers_spin.value())
+        except Exception:
+            self.config['parallel_workers'] = os.cpu_count() or 8
 
         os.makedirs(os.path.dirname(self.config_file), exist_ok=True)
         with open(self.config_file, 'w') as f:
@@ -121,6 +129,16 @@ class WorkspaceManagerGUI(QMainWindow):
         self.always_on_top_btn.setChecked(self.config.get('always_on_top', False))
         self.always_on_top_btn.clicked.connect(self.toggle_always_on_top)
         options_layout.addWidget(self.always_on_top_btn)
+
+        # 并行编译线程设置
+        options_layout.addWidget(QLabel('Workers'))
+        self.workers_spin = QSpinBox()
+        self.workers_spin.setMinimum(1)
+        max_workers = os.cpu_count() or 32
+        self.workers_spin.setMaximum(max_workers)
+        self.workers_spin.setValue(int(self.config.get('parallel_workers', max_workers)))
+        self.workers_spin.valueChanged.connect(self.save_config)
+        options_layout.addWidget(self.workers_spin)
 
         layout.addLayout(options_layout)
 
@@ -277,7 +295,9 @@ class WorkspaceManagerGUI(QMainWindow):
             cmd.append('--symlink-install')
 
         # 添加parallel-workers参数
-        cmd.extend(['--parallel-workers', '8'])
+        # 使用配置中的并行线程数
+        workers = int(self.config.get('parallel_workers', os.cpu_count() or 8))
+        cmd.extend(['--parallel-workers', str(workers)])
 
         cmd.extend(['--packages-select'])
         cmd.extend(selected_packages)

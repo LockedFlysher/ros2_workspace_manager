@@ -3,7 +3,6 @@ import rclpy
 import os
 
 from rclpy.node import Node
-from wx.dataview import wxEVT_COMMAND_DATAVIEW_ITEM_EDITING_DONE
 
 from .gui.main_window import WorkspaceManagerGUI
 from ament_index_python import get_package_share_directory
