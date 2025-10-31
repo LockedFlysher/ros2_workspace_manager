@@ -1,0 +1,10 @@
+always_on_top: true
+last_selected_packages:
+- mujoco_simulator_python
+- rl_deploy_python
+- mujoco_lidar
+- robot_description
+- mit_msgs
+parallel_workers: 16
+symlink_install: true
+workspace_path: /home/sunnypea/project/zsl_deploy_WS
