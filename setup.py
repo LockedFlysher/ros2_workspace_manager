@@ -15,6 +15,8 @@ setup(
         (os.path.join('share', package_name, 'config'), glob('workspace_manager/config/*.yaml')),
         # 添加以下行来安装icon文件夹下的所有文件
         (os.path.join('share', package_name, 'icon'), glob('workspace_manager/icon/*.jpg')),
+        # 安装样式表文件（QSS）
+        (os.path.join('share', package_name, 'gui'), glob('workspace_manager/gui/*.qss')),
     ],
     install_requires=['setuptools', 'pyyaml'],  # 添加 pyyaml 依赖
     zip_safe=True,

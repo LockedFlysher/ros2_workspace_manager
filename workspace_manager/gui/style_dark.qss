@@ -1,0 +1,133 @@
+/* Dark theme for Workspace Manager */
+QWidget {
+    background-color: #1f2329;
+    color: #e6e6e6;
+    font-size: 12px;
+}
+
+QMainWindow, QDialog {
+    background-color: #1f2329;
+}
+
+QGroupBox {
+    border: 1px solid #343a40;
+    border-radius: 6px;
+    margin-top: 12px;
+    padding: 8px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 4px;
+    color: #bfc7d5;
+}
+
+QToolBar {
+    background-color: #242a31;
+    border-bottom: 1px solid #343a40;
+    spacing: 6px;
+}
+
+QStatusBar {
+    background-color: #242a31;
+    border-top: 1px solid #343a40;
+}
+
+QPushButton {
+    background-color: #2e3440;
+    border: 1px solid #3b4252;
+    padding: 6px 10px;
+    border-radius: 4px;
+}
+
+QPushButton:hover {
+    background-color: #3b4252;
+}
+
+QPushButton:disabled {
+    color: #888;
+    background-color: #2a2f3a;
+    border-color: #303643;
+}
+
+QCheckBox, QLabel {
+    color: #e6e6e6;
+}
+
+QLineEdit, QSpinBox, QComboBox, QTextEdit {
+    background-color: #2a2f3a;
+    color: #e6e6e6;
+    border: 1px solid #3b4252;
+    border-radius: 4px;
+    padding: 4px 6px;
+}
+
+QScrollArea {
+    background-color: transparent;
+}
+
+QTableWidget, QTableView {
+    background-color: #1f2329;
+    alternate-background-color: #222831;
+    gridline-color: #343a40;
+    selection-background-color: #2f3945;
+    selection-color: #e6e6e6;
+}
+
+QHeaderView::section {
+    background-color: #242a31;
+    color: #bfc7d5;
+    border: 1px solid #343a40;
+    padding: 6px 8px;
+}
+
+QProgressBar {
+    border: 1px solid #3b4252;
+    border-radius: 4px;
+    text-align: center;
+}
+
+QProgressBar::chunk {
+    background-color: #5e81ac;
+}
+
+#buildPrimaryBtn {
+    background-color: #5e81ac;
+    color: #ffffff;
+    border: 1px solid #688cb4;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+#buildPrimaryBtn:hover {
+    background-color: #6c8fb4;
+}
+
+#buildPrimaryBtn:disabled {
+    background-color: #3b4a5b;
+    border-color: #3b4a5b;
+    color: #bfc7d5;
+}
+
+#cleanSecondaryBtn {
+    background-color: #2e3440;
+    color: #e6e6e6;
+    border: 1px solid #3b4252;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+#cleanSecondaryBtn:hover {
+    background-color: #3b4252;
+}
+
+#cleanSecondaryBtn:disabled {
+    color: #888;
+    background-color: #2a2f3a;
+    border-color: #303643;
+}
