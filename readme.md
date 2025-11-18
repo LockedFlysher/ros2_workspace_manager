@@ -23,7 +23,7 @@
 1. 将本包克隆到你的 ROS2 工作空间的 src 目录：
 ```bash
 cd ~/your_workspace/src
-git clone https://gitee.com/LockedFlysher/ros2-workspace-manager.git
+git clone https://github.com/LockedFlysher/ros2_workspace_manager.git
 ```
 
 2. 安装依赖：
