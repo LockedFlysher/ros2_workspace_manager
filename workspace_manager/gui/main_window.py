@@ -10,12 +10,32 @@ from PyQt5.QtWidgets import (
     QGraphicsView, QGraphicsScene,
 )
 from PyQt5.QtCore import Qt, QProcess, QSize, QPointF, QRectF
-from PyQt5.QtGui import QPen, QBrush, QColor, QFont, QPolygonF
+from PyQt5.QtGui import QPen, QBrush, QColor, QFont, QPolygonF, QWheelEvent
 import os
 import yaml
 import xml.etree.ElementTree as ET
 import shutil
 from ament_index_python.packages import get_package_share_directory
+
+
+class ZoomableGraphicsView(QGraphicsView):
+    """支持鼠标滚轮缩放的 QGraphicsView"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
+        self.zoom_factor = 1.15
+
+    def wheelEvent(self, event: QWheelEvent):
+        """处理鼠标滚轮事件进行缩放"""
+        if event.angleDelta().y() > 0:
+            # 向上滚动，放大
+            self.scale(self.zoom_factor, self.zoom_factor)
+        else:
+            # 向下滚动，缩小
+            self.scale(1 / self.zoom_factor, 1 / self.zoom_factor)
+        event.accept()
 
 class WorkspaceManagerGUI(QMainWindow):
     def __init__(self, node):
@@ -658,7 +678,7 @@ class WorkspaceManagerGUI(QMainWindow):
         dlg.resize(900, 600)
 
         layout = QVBoxLayout(dlg)
-        view = QGraphicsView()
+        view = ZoomableGraphicsView()
         scene = self._build_dependency_scene(nodes, edges, set(selected))
         view.setScene(scene)
         view.setRenderHints(view.renderHints())
