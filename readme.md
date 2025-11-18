@@ -30,7 +30,6 @@ git clone https://github.com/LockedFlysher/ros2_workspace_manager.git
 ```bash
 sudo apt update
 sudo apt install libgtk-3-dev
-pip3 install wxPython
 sudo apt install python3-pyqt5  # PyQt5
 pip3 install pyyaml            # PyYAML
 ```
